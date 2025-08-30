@@ -14,7 +14,7 @@ export const checkSeatsAvailability = async (showId, selectedSeats) =>{
 
         return !isAnySeatTaken;
     }catch(error){
-        console.log(error.message);
+        console.error(error.message);
         return false;
     }
 }
@@ -54,7 +54,7 @@ export const createBooking = async (req,res) =>{
         //  Stripe Gateway Initialize
         res.json({success: true,message: 'Booked successfully'});
     }catch(error){
-        console.log(error.message);
+        console.error(error.message);
         res.json({success: false, message:error.message});
     }
 }
@@ -68,9 +68,9 @@ export const getOccupiedSeats = async (req,res) =>{
         const occupiedSeats = Object.keys(showData.occupiedSeats);
 
         res.json({success: true, occupiedSeats});
-        
+
     }catch(error){
-        console.log(error.message);
+        console.error(error.message);
         res.json({success:false, message: error.message})
     }
 }
