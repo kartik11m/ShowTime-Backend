@@ -1,6 +1,7 @@
 import axios from "axios"
 import Movie from "../models/Movie.js";
 import Show from "../models/Show.js";
+import mongoose from "mongoose";
 
 // API to get now playing movies from TMDB API
 export const getNowPlayingMovies = async (req,res) =>{
@@ -102,6 +103,9 @@ export const getShows = async(req,res) =>{
 export const getShow = async(req ,res) =>{
     try{
         const {movieId} = req.params;
+        if (!movieId) {
+            return res.json({success: false, message: "A valid movieId is required."});
+        }
         // get all upcoming shows for the movie
         const shows = await Show.find({movie: movieId, showDateTime:{$gte: new Date()}})
 
