@@ -32,7 +32,7 @@ export const updateFavorite = async (req,res) =>{
             user.privateMetadata.favorites = [];
         }
 
-        if(!user.privateMetadata.favorites.include(movieId)){
+        if(!user.privateMetadata.favorites.includes(movieId)){
             user.privateMetadata.favorites.push(movieId);
         }else{
             user.privateMetadata.favorites = user.privateMetadata.favorites.filter(item => item !== movieId);
