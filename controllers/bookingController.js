@@ -59,7 +59,7 @@ export const createBooking = async (req,res) =>{
         const line_items = [{
             price_data: {
                 currency: 'usd',
-                price_data:{
+                product_data:{
                     name: showData.movie.title,
                 },
                 unit_amount: Math.floor(booking.amount)* 100
