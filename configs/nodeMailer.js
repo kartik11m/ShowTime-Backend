@@ -1,4 +1,7 @@
 import nodemailer from 'nodemailer';
+import React from 'react';
+
+// Changed the file name from nodeMailer to nodemailer
 
 // Create a transporter for SMTP
 const transporter = nodemailer.createTransport({
