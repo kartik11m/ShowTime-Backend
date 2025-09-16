@@ -1,6 +1,7 @@
 import axios from "axios"
 import Movie from "../models/Movie.js";
 import Show from "../models/Show.js";
+import {inngest} from "../inngest/index.js"
 import mongoose from "mongoose";
 
 // API to get now playing movies from TMDB API
@@ -81,7 +82,7 @@ export const addShow = async(req,res)=>{
             name:"app/show.added",
             data: {movieTitle: movie.title}
         });
-        
+
         res.json({success: true, message: 'Show Added successfully'})
     }catch(error){
         console.error(error);
