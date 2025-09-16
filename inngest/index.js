@@ -76,6 +76,81 @@ const releaseSeatsAndDeleteBooking = inngest.createFunction(
     }
 )
 
+const sendShowReminders = inngest.createFunction(
+	{id: "send-show-reminders"},
+	{cron: "0 */8 * * *"},// Every 8 hours
+	async ({step}) =>{
+		const now = new Date();
+		const in8Hours = new Date(now.getTime() + 8*60*60*1000);
+		const windowStart = new Date(in8Hours.getTime() - 10 * 60 * 1000);
+
+		// Prepare reminder tasks
+		const reminderTasks = await step.run("prepare-reminder-tasks",async ()=>{
+			const shows = await Show.find({
+				showTime: {$gte: windowStart, $lte: in8Hours},
+			}).populate('movie');
+
+			const tasks = [];
+			for(const show of shows){
+				if(!show.movie || !show.occupiedSeats){
+					continue;
+				}
+
+				const userIds = [...new Set(Object.values(show.occupiedSeats))];
+				if(userIds.length === 0) continue;
+
+				const users = await User.find({_id: {$in : userIds}}).select("name email");
+
+				for(const user of users){
+					tasks.push({
+						userEmail: user.email,
+						userName: user.name,
+						movieTitle: show.movie.title,
+						showTime: show.showTime,
+					})
+				}
+			}
+			return tasks;
+		})
+
+		if(reminderTasks.length === 0){
+			return {sent: 0, message:"No reminders to send."}
+		}
+
+		// Send reminder emails
+		const results = await step.run('send-all-reminders', async ()=>{
+			return await Promise.allSettled(
+				reminderTasks.map(task => sendEmail({
+					to: task.userEmail,
+					subject: `Reminder: Your movie "${task.movieTitle}" starts soon!`,
+					body: `
+					<div>
+					<h2> Hello ${task.userName},</h2>
+					<p>This is a quick reminder that your movie:"${task.movieTitle}"
+					is scheduled for <strong>
+					${new Date(task.showTime).toLocaleDateString('en-US', {timezone: 'Asia/Kolkata'})}
+					</strong> at <strong>${new Date(task.showTime).toLocaleTimeString('en-US', {timezone: 'Asia/Kolkata'})}</strong>.
+					</p>
+					<p>It starts in approximately <strong>8 hours</strong> - make sure you are ready!</p>
+					<br/>
+					<p>Enjoy the show! <br/> QuickShow Team</p>
+					</div>
+					`
+				}))
+			)
+		})
+
+		const sent = results.filter(r => r.status === 'fulfilled').length;
+		const failed = results.length - sent;
+
+		return{
+			sent,
+			failed,
+			message: `Sent ${sent} reminder(s) , ${failed} failed. `
+		}
+	}
+)
+
 const sendBookingConfirmationEmail = inngest.createFunction(
     {id: "send-booking-confirmation-email"},
     {event: "app/show.booked"},
@@ -930,4 +1005,5 @@ export const functions = [
     syncUserUpdation,
     releaseSeatsAndDeleteBooking,
     sendBookingConfirmationEmail,
+	sendShowReminders,
 ];
