@@ -149,6 +149,40 @@ const sendShowReminders = inngest.createFunction(
 			message: `Sent ${sent} reminder(s) , ${failed} failed. `
 		}
 	}
+);
+
+const sendNewShowNotifications = inngest.createFunction(
+	{id: "send-new-show-notifications"},
+	{event: "app/show.addded"},
+	async({event}) =>{
+		const {movieTitle} = event.data;
+
+		const users = await User.find({});
+
+		for(const user of users){
+			const userEmail = user.email;
+			const userName = user.name;
+
+			const subject = `New Show Added: ${movieTitle}`;
+			const body = `
+			<div>
+			<h2>Hi ${userName}</h2>
+			<p> We have just added a new show to our library: "${movieTitle}"</p>
+			<p>Visit our website</p>
+			<br/>
+			<p>Thanks, <br/> QuickShow Team</p>
+			</div>
+			`
+
+			await sendEmail({
+				to: userEmail,
+				subject,
+				body,
+			})
+		}
+
+		return {message : "Notification sent."}
+	}
 )
 
 const sendBookingConfirmationEmail = inngest.createFunction(
@@ -1006,4 +1040,5 @@ export const functions = [
     releaseSeatsAndDeleteBooking,
     sendBookingConfirmationEmail,
 	sendShowReminders,
+	sendNewShowNotifications,
 ];
